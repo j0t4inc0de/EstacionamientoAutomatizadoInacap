@@ -8,7 +8,6 @@ def save_data(data, file_path="database/datos.txt"):
         for key, value in data.items():
             file.write(f"{key}:{value}\n")
 
-
 def load_data(file_path="database/datos.txt"):
     """
     Carga los datos desde un archivo de texto. Devuelve un diccionario con los datos cargados.
