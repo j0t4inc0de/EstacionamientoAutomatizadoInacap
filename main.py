@@ -97,7 +97,7 @@ class MyApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Sistema de estacionamiento - INACAP')
-        self.setGeometry(100, 100, 600, 400)
+        self.setGeometry(100, 100, 800, 400)
 
         # Variables para mantener el estado de ocupación
         self.total_normal = 214

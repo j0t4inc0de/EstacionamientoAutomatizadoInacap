@@ -1,8 +1,8 @@
-ocupados_normal:25
+ocupados_normal:0
 ocupados_ejecutivo:0
-ocupados_reservas:8
-ocupados_discapacitados:1
-ocupados_mecanica:2
-ocupados_ambulancia:1
+ocupados_reservas:0
+ocupados_discapacitados:0
+ocupados_mecanica:0
+ocupados_ambulancia:0
 hora_inicio_administrativo:8
 hora_fin_administrativo:20
