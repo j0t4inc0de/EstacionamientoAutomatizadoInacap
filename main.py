@@ -283,7 +283,13 @@ class MyApp(QMainWindow):
         new_count = current_count + change
         if min_val <= new_count <= max_val:
             label.setText(f"{new_count}/{max_val}")
-            self.update_total(section, change)
+
+            # Actualizar solo la sección correspondiente sin duplicar
+            if section == "ejecutivo":
+                self.ocupados_ejecutivo += change
+                self.update_section_labels()
+            else:
+                self.update_total(section, change)
 
     def update_total(self, section, change):
         """
