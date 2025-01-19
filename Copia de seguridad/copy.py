@@ -27,7 +27,6 @@ class CameraThread(QThread):
         self.running = True
         self.vehicle_tracks = deque(maxlen=100)  # Seguimiento limitado a los últimos 100 vehículos
         self.time_threshold = 1.0  # Tiempo mínimo entre detecciones para evitar duplicados
-        
 
     def run(self):
         cap = cv2.VideoCapture(self.video_path)
@@ -79,7 +78,6 @@ class CameraThread(QThread):
                             })
                             self.vehicle_exited.emit()  # Emitir señal de salida
                             cv2.putText(frame, "Salida", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-
             # Dibujar líneas
             cv2.line(frame, self.left_line[0], self.left_line[1], (0, 0, 255), 2)
             cv2.line(frame, self.right_line[0], self.right_line[1], (255, 0, 0), 2)
@@ -88,7 +86,6 @@ class CameraThread(QThread):
             cv2.imshow("Detección en tiempo real", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-
         cap.release()
         cv2.destroyAllWindows()
 
@@ -100,7 +97,7 @@ class MyApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Sistema de estacionamiento - INACAP')
-        self.setGeometry(100, 100, 600, 400)
+        self.setGeometry(100, 100, 800, 400)
 
         # Variables para mantener el estado de ocupación
         self.total_normal = 214
@@ -284,10 +281,15 @@ class MyApp(QMainWindow):
     def update_count(self, label, change, min_val, max_val, section):
         current_count = int(label.text().split('/')[0])
         new_count = current_count + change
-
         if min_val <= new_count <= max_val:
             label.setText(f"{new_count}/{max_val}")
-            self.update_total(section, change)
+
+            # Actualizar solo la sección correspondiente sin duplicar
+            if section == "ejecutivo":
+                self.ocupados_ejecutivo += change
+                self.update_section_labels()
+            else:
+                self.update_total(section, change)
 
     def update_total(self, section, change):
         """
@@ -307,11 +309,9 @@ class MyApp(QMainWindow):
 
         # Actualiza el total general de ocupados
         self.ocupados_normal += change
-
         # Actualiza las etiquetas visuales
         self.ocupados_label.setText(f"{self.ocupados_normal}/{self.total_normal}")
         self.disponibles_label.setText(f"{self.total_normal - self.ocupados_normal}")
-
         # Guardamos los datos actualizados
         self.update_section_labels()
 
@@ -460,7 +460,6 @@ class MyApp(QMainWindow):
         if self.camera_thread and self.camera_thread.isRunning():
             print("La cámara ya está en ejecución.")
             return
-
         self.camera_thread = CameraThread("videocar.MOV", self.yolo_model, self.left_line, self.right_line)
 
         # Conectar señales para actualizar contadores
