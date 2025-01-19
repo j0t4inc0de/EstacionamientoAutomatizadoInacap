@@ -341,7 +341,7 @@ class MyApp(QMainWindow):
         section_layout = QVBoxLayout()
         title_label = QLabel(title)
         title_label.setAlignment(Qt.AlignCenter)
-        title_label.setStyleSheet("font-size: 18px; color: #ECF0F1;")
+        title_label.setStyleSheet("font-size: 24px; color: #ECF0F1;")
 
         value_label = QLabel(value)
         value_label.setAlignment(Qt.AlignCenter)
@@ -372,7 +372,7 @@ class MyApp(QMainWindow):
 
         title_label = QLabel(title)
         title_label.setAlignment(Qt.AlignCenter)
-        title_label.setStyleSheet("font-size: 18px; color: #ECF0F1;")
+        title_label.setStyleSheet("font-size: 24px; color: #ECF0F1;")
 
         value_label = QLabel(value)
         value_label.setAlignment(Qt.AlignCenter)
