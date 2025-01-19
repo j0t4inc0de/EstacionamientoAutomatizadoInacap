@@ -397,7 +397,7 @@ class MyApp(QMainWindow):
                 padding: 5px;
             }
             QPushButton:hover {
-                background-color: #ECF0F1;
+                background-color: #b7c0c2;
             }
             QPushButton:pressed {
                 background-color: #BDC3C7;
@@ -414,7 +414,7 @@ class MyApp(QMainWindow):
                 padding: 5px;
             }
             QPushButton:hover {
-                background-color: #ECF0F1;
+                background-color: #b7c0c2;
             }
             QPushButton:pressed {
                 background-color: #BDC3C7;
