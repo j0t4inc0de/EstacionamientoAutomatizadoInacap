@@ -199,18 +199,32 @@ class MyApp(QMainWindow):
         # Diseño principal
         main_layout = QVBoxLayout()
 
-        # Crear un diseño horizontal para el encabezado
         header_layout = QHBoxLayout()
 
         # Etiqueta para el título
-        header_label = QLabel("Estacionamientos:")
-        header_label.setAlignment(Qt.AlignLeft)
-        header_label.setStyleSheet("font-size: 35px; font-weight: bold; color: #000000;")
-        header_layout.addWidget(header_label)
-
+        header_label = QLabel("Estacionamientos Sede Los Ángeles")
+        header_label.setAlignment(Qt.AlignCenter)
+        header_label.setStyleSheet("""
+            font-size: 35px; 
+            font-weight: bold; 
+            color: #000000;
+            qproperty-alignment: 'AlignCenter';
+            padding: 10px;
+        """)
+        
         # Etiqueta para la imagen
         logo_label = QLabel(self)
         pixmap = QPixmap("fablab.jpeg")  # Logo FabLab
+        # Layout con elementos centrados
+        header_layout.addStretch(1)
+        header_layout.addWidget(header_label, stretch=2)
+        header_layout.addStretch(1)
+        header_layout.addWidget(logo_label, alignment=Qt.AlignRight)
+
+        # Ajustar márgenes del layout
+        header_layout.setContentsMargins(20, 15, 20, 15)  # Márgenes externos
+        header_layout.setSpacing(30)  # Espacio entre elementos
+
 
         if pixmap.isNull():
             print("Error: No se pudo cargar la imagen. Verifica la ruta o el archivo.")
