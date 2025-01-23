@@ -1,4 +1,4 @@
-ocupados_normal:2
+ocupados_normal:4
 ocupados_ejecutivo:0
 ocupados_reservas:0
 ocupados_discapacitados:0
