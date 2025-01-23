@@ -18,74 +18,136 @@ class CameraThread(QThread):
     vehicle_entered = pyqtSignal()  # Vehículo cruza línea de entrada
     vehicle_exited = pyqtSignal()   # Vehículo cruza línea de salida
     
-    def __init__(self, video_path, yolo_model, left_line, right_line):
+    def __init__(self, video_path, yolo_model, left_line, right_line, frame_interval=3):
         super().__init__()
         self.video_path = video_path
         self.yolo_model = yolo_model
         self.left_line = left_line
         self.right_line = right_line
+        self.frame_interval = frame_interval  # Frecuencia de procesamiento de fotogramas (por defecto 3)
+        self.frame_counter = 0  # Contador de fotogramas procesados
         self.running = True
         self.vehicle_tracks = deque(maxlen=100)  # Seguimiento limitado a los últimos 100 vehículos
         self.time_threshold = 1.0  # Tiempo mínimo entre detecciones para evitar duplicados
+                # Añadir estados para seguimiento de vehículos
+        self.vehicles_crossing_right = set()  # Para entrada
+        self.vehicles_crossing_left = set()   # Para salida
+        self.tracked_vehicles = {}  # Diccionario para seguimiento
+        self.vehicle_id_counter = 0  # Contador para IDs únicos
+
+    def resize_frame(self, frame, width=640):
+        """Redimensiona el fotograma a una resolución específica."""
+        height = int(frame.shape[0] * (width / frame.shape[1]))
+        return cv2.resize(frame, (width, height))
+
+    def check_line_crossing(self, center_x, center_y, vehicle_id, current_time):
+        """Verifica el cruce de líneas con mejor manejo de estado"""
+        
+        # Verificar entrada (línea derecha)
+        if (self.right_line[0][0] < center_x < self.right_line[1][0] and 
+            self.right_line[0][1] - 5 <= center_y <= self.right_line[1][1] + 5):
+            
+            if vehicle_id not in self.vehicles_crossing_right:
+                # Verificar si el vehículo no fue detectado recientemente
+                recent_detection = False
+                for track in self.vehicle_tracks:
+                    if (abs(track['center_x'] - center_x) < 20 and 
+                        abs(track['center_y'] - center_y) < 20 and 
+                        current_time - track['timestamp'] < self.time_threshold):
+                        recent_detection = True
+                        break
+                
+                if not recent_detection:
+                    self.vehicles_crossing_right.add(vehicle_id)
+                    self.vehicle_tracks.append({
+                        'center_x': center_x,
+                        'center_y': center_y,
+                        'timestamp': current_time
+                    })
+                    print("Vehículo detectado entrando")  # Debug
+                    self.vehicle_entered.emit()
+                    return "Entrada"
+        else:
+            self.vehicles_crossing_right.discard(vehicle_id)
+
+        # Verificar salida (línea izquierda)
+        if (self.left_line[0][0] < center_x < self.left_line[1][0] and 
+            self.left_line[0][1] - 5 <= center_y <= self.left_line[1][1] + 5):
+            
+            if vehicle_id not in self.vehicles_crossing_left:
+                recent_detection = False
+                for track in self.vehicle_tracks:
+                    if (abs(track['center_x'] - center_x) < 20 and 
+                        abs(track['center_y'] - center_y) < 20 and 
+                        current_time - track['timestamp'] < self.time_threshold):
+                        recent_detection = True
+                        break
+                
+                if not recent_detection:
+                    self.vehicles_crossing_left.add(vehicle_id)
+                    self.vehicle_tracks.append({
+                        'center_x': center_x,
+                        'center_y': center_y,
+                        'timestamp': current_time
+                    })
+                    print("Vehículo detectado saliendo")  # Debug
+                    self.vehicle_exited.emit()
+                    return "Salida"
+        else:
+            self.vehicles_crossing_left.discard(vehicle_id)
+        
+        return None
 
     def run(self):
         cap = cv2.VideoCapture(self.video_path)
-
+        
         while self.running and cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
-            results = self.yolo_model(frame, conf=0.5)
-            current_time = time.time()
-            for result in results:
-                boxes = result.boxes.xyxy
-                for box in boxes:
-                    x1, y1, x2, y2 = map(int, box[:4])
-                    center_x, center_y = (x1 + x2) // 2, (y1 + y2) // 2
 
-                    # Verificar si cruza la línea derecha (entrada)
-                    if self.right_line[0][0] < center_x < self.right_line[1][0] and \
-                    self.right_line[0][1] - 5 <= center_y <= self.right_line[1][1] + 5:
+            self.frame_counter += 1
+            
+            if self.frame_counter % self.frame_interval == 0:
+                frame_resized = self.resize_frame(frame)
+                results = self.yolo_model(frame_resized, conf=0.5)
+                current_time = time.time()
 
-                        duplicate = any(abs(track['center_x'] - center_x) < 20 and
-                                        abs(track['center_y'] - center_y) < 20 and
-                                        current_time - track['timestamp'] < self.time_threshold
-                                        for track in self.vehicle_tracks)
+                for result in results:
+                    boxes = result.boxes.xyxy
+                    for box in boxes:
+                        x1, y1, x2, y2 = map(int, box[:4])
+                        center_x = (x1 + x2) // 2
+                        center_y = (y1 + y2) // 2
+                        
+                        # Asignar o recuperar ID del vehículo
+                        vehicle_key = f"{center_x}_{center_y}"
+                        if vehicle_key not in self.tracked_vehicles:
+                            self.vehicle_id_counter += 1
+                            self.tracked_vehicles[vehicle_key] = self.vehicle_id_counter
+                        
+                        vehicle_id = self.tracked_vehicles[vehicle_key]
+                        
+                        # Verificar cruce de líneas
+                        crossing_status = self.check_line_crossing(
+                            center_x, center_y, vehicle_id, current_time
+                        )
+                        
+                        # Dibujar información en el frame
+                        if crossing_status:
+                            cv2.putText(frame_resized, crossing_status, 
+                                      (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 
+                                      0.5, (0, 255, 0), 2)
 
-                        if not duplicate:
-                            self.vehicle_tracks.append({
-                                'center_x': center_x,
-                                'center_y': center_y,
-                                'timestamp': current_time
-                            })
-                            self.vehicle_entered.emit()  # Emitir señal de entrada
-                            cv2.putText(frame, "Entrada", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+                # Dibujar líneas
+                cv2.line(frame_resized, self.left_line[0], self.left_line[1], (0, 0, 255), 2)
+                cv2.line(frame_resized, self.right_line[0], self.right_line[1], (255, 0, 0), 2)
 
-                    # Verificar si cruza la línea izquierda (salida)
-                    elif self.left_line[0][0] < center_x < self.left_line[1][0] and \
-                        self.left_line[0][1] - 5 <= center_y <= self.left_line[1][1] + 5:
+                cv2.imshow("Detección en tiempo real", frame_resized)
 
-                        duplicate = any(abs(track['center_x'] - center_x) < 20 and
-                                        abs(track['center_y'] - center_y) < 20 and
-                                        current_time - track['timestamp'] < self.time_threshold
-                                        for track in self.vehicle_tracks)
-
-                        if not duplicate:
-                            self.vehicle_tracks.append({
-                                'center_x': center_x,
-                                'center_y': center_y,
-                                'timestamp': current_time
-                            })
-                            self.vehicle_exited.emit()  # Emitir señal de salida
-                            cv2.putText(frame, "Salida", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-            # Dibujar líneas
-            cv2.line(frame, self.left_line[0], self.left_line[1], (0, 0, 255), 2)
-            cv2.line(frame, self.right_line[0], self.right_line[1], (255, 0, 0), 2)
-
-            # Mostrar video
-            cv2.imshow("Detección en tiempo real", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
+
         cap.release()
         cv2.destroyAllWindows()
 
@@ -109,8 +171,8 @@ class MyApp(QMainWindow):
         self.ocupados_ambulancia = 0
 
         # Líneas para detección
-        self.left_line = [(400, 500), (950, 500)]  # Línea izquierda (salida)
-        self.right_line = [(1000, 500), (1500, 500)]  # Línea derecha (entrada)
+        self.left_line = [(190, 150), (339, 150)]  # Línea izquierda (salida)
+        self.right_line = [(362, 150), (500, 150)]  # Línea derecha (entrada)
 
         # Modelo YOLO
         self.yolo_model = YOLO('./yolov8n.pt')
@@ -460,7 +522,8 @@ class MyApp(QMainWindow):
         if self.camera_thread and self.camera_thread.isRunning():
             print("La cámara ya está en ejecución.")
             return
-        self.camera_thread = CameraThread("videocar.MOV", self.yolo_model, self.left_line, self.right_line)
+        self.camera_thread = CameraThread("rtsp://admin:admin2024@192.168.1.108:554/cam/realmonitor?channel=1&subtype=0", self.yolo_model, self.left_line, self.right_line)
+        # self.camera_thread = CameraThread("videoCAR.MOV", self.yolo_model, self.left_line, self.right_line)
 
         # Conectar señales para actualizar contadores
         self.camera_thread.vehicle_entered.connect(self.vehicle_entered)
