@@ -199,51 +199,38 @@ class MyApp(QMainWindow):
         # Diseño principal
         main_layout = QVBoxLayout()
 
+        # Configurar layout del encabezado
         header_layout = QHBoxLayout()
 
-        # Etiqueta para el título
+        # 1. Título centrado
         header_label = QLabel("Estacionamientos Sede Los Ángeles")
         header_label.setAlignment(Qt.AlignCenter)
         header_label.setStyleSheet("""
             font-size: 35px; 
             font-weight: bold; 
             color: #000000;
-            qproperty-alignment: 'AlignCenter';
             padding: 10px;
         """)
-        
-        # Etiqueta para la imagen
+
+        # 2. Logo en esquina derecha
         logo_label = QLabel(self)
-        pixmap = QPixmap("fablab.jpeg")  # Logo FabLab
-        # Layout con elementos centrados
-        header_layout.addStretch(1)
-        header_layout.addWidget(header_label, stretch=2)
-        header_layout.addStretch(1)
-        header_layout.addWidget(logo_label, alignment=Qt.AlignRight)
-
-        # Ajustar márgenes del layout
-        header_layout.setContentsMargins(20, 15, 20, 15)  # Márgenes externos
-        header_layout.setSpacing(30)  # Espacio entre elementos
-
-
-        if pixmap.isNull():
-            print("Error: No se pudo cargar la imagen. Verifica la ruta o el archivo.")
+        pixmap = QPixmap("fablab.jpeg")
+        if not pixmap.isNull():
+            logo_label.setPixmap(pixmap.scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            logo_label.setFixedSize(100, 100)
         else:
-            # Nuevo tamaño más grande (ancho x alto)
-            nuevo_ancho = 100  # Aumenté de 100 a 200
-            nuevo_alto = 100   # Aumenté de 50 a 100
-            scaled_pixmap = pixmap.scaled(
-                nuevo_ancho, 
-                nuevo_alto, 
-                Qt.KeepAspectRatio, 
-                Qt.SmoothTransformation
-            )
-            logo_label.setPixmap(scaled_pixmap)
-            logo_label.setFixedSize(nuevo_ancho, nuevo_alto)  # Fija el tamaño del contenedor
+            print("Error cargando imagen")
 
-        header_layout.addWidget(logo_label, alignment=Qt.AlignRight)
+        # Estructura del layout
+        header_layout.addStretch(1)  # Espacio izquierdo
+        header_layout.addWidget(header_label, stretch=0, alignment=Qt.AlignCenter)  # Título centrado
+        header_layout.addStretch(1)  # Espacio derecho
+        header_layout.addWidget(logo_label, alignment=Qt.AlignRight)  # Logo pegado a la derecha
 
-        # Añadir el diseño del encabezado al diseño principal
+        # Ajustar márgenes
+        header_layout.setContentsMargins(20, 15, 20, 15)  # Margen derecho 20px para separar el logo
+
+        # Añadir al layout principal
         main_layout.addLayout(header_layout)
 
         # Diseño en cuadrícula para las secciones principales
