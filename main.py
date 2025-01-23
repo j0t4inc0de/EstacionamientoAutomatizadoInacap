@@ -205,22 +205,28 @@ class MyApp(QMainWindow):
         # Etiqueta para el título
         header_label = QLabel("Estacionamientos:")
         header_label.setAlignment(Qt.AlignLeft)
-        header_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #2C3E50;")
+        header_label.setStyleSheet("font-size: 35px; font-weight: bold; color: #000000;")
         header_layout.addWidget(header_label)
 
         # Etiqueta para la imagen
         logo_label = QLabel(self)
-        pixmap = QPixmap("inacap_logo.png")
+        pixmap = QPixmap("fablab.jpeg")  # Logo FabLab
 
-        # Verificar si la imagen se cargó correctamente
         if pixmap.isNull():
             print("Error: No se pudo cargar la imagen. Verifica la ruta o el archivo.")
         else:
-            # Redimensionar la imagen (100x50 píxeles, manteniendo proporción)
-            scaled_pixmap = pixmap.scaled(100, 50, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            # Nuevo tamaño más grande (ancho x alto)
+            nuevo_ancho = 100  # Aumenté de 100 a 200
+            nuevo_alto = 100   # Aumenté de 50 a 100
+            scaled_pixmap = pixmap.scaled(
+                nuevo_ancho, 
+                nuevo_alto, 
+                Qt.KeepAspectRatio, 
+                Qt.SmoothTransformation
+            )
             logo_label.setPixmap(scaled_pixmap)
+            logo_label.setFixedSize(nuevo_ancho, nuevo_alto)  # Fija el tamaño del contenedor
 
-        # Alinear la imagen a la derecha
         header_layout.addWidget(logo_label, alignment=Qt.AlignRight)
 
         # Añadir el diseño del encabezado al diseño principal
@@ -403,18 +409,34 @@ class MyApp(QMainWindow):
         section_layout = QVBoxLayout()
         title_label = QLabel(title)
         title_label.setAlignment(Qt.AlignCenter)
-        title_label.setStyleSheet("font-size: 24px; color: #ECF0F1;")
+        title_label.setStyleSheet("""
+            font-size: 40px; 
+            color: #FFFFFF;
+            font-weight: bold;
+        """)
 
         value_label = QLabel(value)
         value_label.setAlignment(Qt.AlignCenter)
-        value_label.setStyleSheet("font-size: 24px; font-weight: bold; color: white;")
+        value_label.setStyleSheet("""
+            font-size: 50px;
+            color: #000000;
+            font-weight: bold;
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 5px;
+        """)
 
         section_layout.addWidget(title_label)
         section_layout.addWidget(value_label)
 
         container = QWidget()
         container.setLayout(section_layout)
-        container.setStyleSheet("background-color: #34495E; border-radius: 10px; padding: 10px;")
+        container.setStyleSheet("""
+            background-color: #eb5f14;
+            border: 2px solid #000000;
+            border-radius: 15px;
+            padding: 20px;
+        """)
 
         layout.addWidget(container, row, col)
 
@@ -434,11 +456,15 @@ class MyApp(QMainWindow):
 
         title_label = QLabel(title)
         title_label.setAlignment(Qt.AlignCenter)
-        title_label.setStyleSheet("font-size: 24px; color: #ECF0F1;")
+        title_label.setStyleSheet("""
+            font-size: 35px;
+            color: #FFFFFF;
+            font-weight: semi-bold;
+        """)
 
         value_label = QLabel(value)
         value_label.setAlignment(Qt.AlignCenter)
-        value_label.setStyleSheet("font-size: 24px; font-weight: bold; color: white;")
+        value_label.setStyleSheet("font-size: 50px; color: #000000; background-color: #ffffff;")
         value_label.setObjectName(f"{section}_label")
 
         if section == "ejecutivo":
@@ -449,40 +475,26 @@ class MyApp(QMainWindow):
         btn_decr = QPushButton('-')
 
         # Estilo para botones blancos
-        btn_incr.setStyleSheet("""
+        button_style = """
             QPushButton {
-                font-size: 18px;
-                color: #34495E;
-                background-color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 5px;
+                font-size: 30px;
+                color: #000000;
+                background-color: #ffffff;
+                border: 2px solid #FFFFFF;
+                border-radius: 8px;
+                min-width: 30px;
+                min-height: 30px;
+                padding: 15px;
             }
             QPushButton:hover {
-                background-color: #b7c0c2;
+                background-color: #c2c2c2;
             }
             QPushButton:pressed {
-                background-color: #BDC3C7;
+                background-color: #8f8f8f;
             }
-        """)
-
-        btn_decr.setStyleSheet("""
-            QPushButton {
-                font-size: 18px;
-                color: #34495E;
-                background-color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 5px;
-            }
-            QPushButton:hover {
-                background-color: #b7c0c2;
-            }
-            QPushButton:pressed {
-                background-color: #BDC3C7;
-            }
-        """)
-
+        """
+        btn_incr.setStyleSheet(button_style)
+        btn_decr.setStyleSheet(button_style)
         btn_incr.clicked.connect(lambda: self.update_count(value_label, 1, 0, max_val, section))
         btn_decr.clicked.connect(lambda: self.update_count(value_label, -1, 0, max_val, section))
 
@@ -495,7 +507,12 @@ class MyApp(QMainWindow):
 
         container = QWidget()
         container.setLayout(section_layout)
-        container.setStyleSheet("background-color: #34495E; border-radius: 10px; padding: 10px;")
+        container.setStyleSheet("""
+            background-color: #eb5f14;
+            border: 2px solid #000000;
+            border-radius: 15px;
+            padding: 15px;
+        """)
 
         layout.addWidget(container, row, col)
         return value_label
