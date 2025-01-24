@@ -1,5 +1,6 @@
 # Camara
 import cv2
+import torch
 from ultralytics import YOLO
 from collections import deque
 import time
@@ -100,6 +101,8 @@ class CameraThread(QThread):
 
     def run(self):
         cap = cv2.VideoCapture(self.video_path)
+        # Clases permitidas: 2(car), 5(bus), 7(truck) - según tu listado
+        allowed_classes = [2, 5, 7]  # Añade/remueve clases según necesidad
         
         while self.running and cap.isOpened():
             ret, frame = cap.read()
@@ -110,12 +113,29 @@ class CameraThread(QThread):
             
             if self.frame_counter % self.frame_interval == 0:
                 frame_resized = self.resize_frame(frame)
-                results = self.yolo_model(frame_resized, conf=0.5)
-                current_time = time.time()
-
+                results = self.yolo_model(frame_resized, conf=0.6)  # Aumentamos confianza
+                
+                # Modificación clave aquí: filtrado por clases y parámetros
+                results = self.yolo_model(
+                    frame_resized,
+                    conf=0.6,  # Mayor confianza para menos falsos positivos
+                    classes=allowed_classes,  # Filtramos solo las clases deseadas
+                    verbose=False  # Desactivar logs para mejor rendimiento
+                )
+                
+                current_time = time.time()                
+                
+                # Obtener todas las detecciones
                 for result in results:
-                    boxes = result.boxes.xyxy
-                    for box in boxes:
+                    boxes = result.boxes.xyxy.cpu().numpy()
+                    class_ids = result.boxes.cls.cpu().numpy().astype(int)
+                    
+                    current_time = time.time()
+                    
+                    for box, class_id in zip(boxes, class_ids):
+                        if class_id not in allowed_classes:
+                            continue  # Ignorar personas, bicicletas, etc.
+
                         x1, y1, x2, y2 = map(int, box[:4])
                         center_x = (x1 + x2) // 2
                         center_y = (y1 + y2) // 2
@@ -175,7 +195,10 @@ class MyApp(QMainWindow):
         self.right_line = [(362, 150), (500, 150)]  # Línea derecha (entrada)
 
         # Modelo YOLO
-        self.yolo_model = YOLO('./yolov8n.pt')
+        # Modificación en la carga del modelo YOLO
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        print(f"Usando dispositivo: {device.upper()}")
+        self.yolo_model = YOLO('./yolov8m.pt').to(device)  # Cargar modelo en GPU si está disponible
 
         # Hilo de cámara
         self.camera_thread = None
