@@ -563,8 +563,8 @@ class MyApp(QMainWindow):
         if self.camera_thread and self.camera_thread.isRunning():
             print("La cámara ya está en ejecución.")
             return
-        # self.camera_thread = CameraThread("rtsp://admin:admin2024@192.168.1.108:554/cam/realmonitor?channel=1&subtype=0", self.yolo_model, self.left_line, self.right_line)
-        self.camera_thread = CameraThread("videoCAR.MOV", self.yolo_model, self.left_line, self.right_line)
+        self.camera_thread = CameraThread("rtsp://admin:admin2024@192.168.1.108:554/cam/realmonitor?channel=1&subtype=0", self.yolo_model, self.left_line, self.right_line)
+        # self.camera_thread = CameraThread("videoCAR.MOV", self.yolo_model, self.left_line, self.right_line)
 
         # Conectar señales para actualizar contadores
         self.camera_thread.vehicle_entered.connect(self.vehicle_entered)
